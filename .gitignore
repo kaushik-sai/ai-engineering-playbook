@@ -1,0 +1,23 @@
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.secrets/
+
+# Claude Code local files (shared .claude/settings.json is committed in target repos)
+.claude/settings.local.json
+.claude/audit/
+CLAUDE.local.md
+
+# Test and tool output
+testResults.xml
+coverage/
+node_modules/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
