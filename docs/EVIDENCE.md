@@ -25,8 +25,6 @@ PowerShell 7.4.6 came from the GitHub release tarball, checked against the relea
 
 ## Not verified locally, and why
 
-- **Real Pester 5.7.1.** The PowerShell Gallery and nuget.org are blocked from this container, so the tests ran under a small stand-in runner that implements the `Describe`, `It`, `BeforeAll` and `Should` forms the file uses. The first run under real Pester is the `powershell` job in CI on the first PR.
-- **gitleaks and markdownlint-cli2-action.** Run only in CI.
 - **Hooks inside a live Claude Code session.** The tests pipe hook JSON into each script the way Claude Code does; the scripts were not wired into a running session here.
 - **Windows.** The hooks and tests use only cross-platform PowerShell, but they ran on Linux only.
 - **Scenarios end to end.** They are recommended designs. Each scenario file says so.
@@ -56,4 +54,18 @@ Rendered with Chromium (Playwright 1.56.1) at 1280 px light and 390 px dark:
 
 ## CI
 
-Not run yet. The first PR run of `playbook-checks` is the first CI evidence and will be recorded here.
+First run of `playbook-checks` on [PR #1](https://github.com/kaushik-sai/ai-engineering-playbook/pull/1), commit `9ef356c`, [run 38954386658](https://github.com/kaushik-sai/ai-engineering-playbook/actions/runs/38954386658): all 7 jobs green.
+
+| Job | Result |
+| --- | --- |
+| markdownlint | pass |
+| links (internal) | pass |
+| secrets (gitleaks, full history) | pass |
+| powershell | PSScriptAnalyzer 0 findings; real Pester 5.7.1: 118 passed, 0 failed, 0 skipped, 86 s |
+| json | pass |
+| design tokens | pass |
+| actionlint | pass |
+
+The local hook test run used a stand-in runner because the PowerShell Gallery is blocked in the build container; this CI run is the confirmation under real Pester.
+
+GitHub warned that `actions/checkout` v4.3.0 and `actions/upload-artifact` v4.6.2 target Node.js 20, which runners now force onto Node.js 24. Dependabot will propose the newer major versions.
