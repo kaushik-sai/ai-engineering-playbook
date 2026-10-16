@@ -1,0 +1,7 @@
+# Link check for the repo. CI runs it offline: `--offline --include-fragments`.
+# Only relative links and #fragments inside the repo are verified.
+offline = true
+include_fragments = true
+include_mail = false
+no_progress = true
+exclude_path = ["node_modules", ".git"]

@@ -1,0 +1,48 @@
+name: Playbook change
+description: Propose a change to a playbook chapter, template or hook.
+title: "[change] "
+labels: ["playbook"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for fixes and improvements to existing content. For a new use case, use "Scenario proposal".
+        Do not paste secrets, tokens or customer data.
+  - type: input
+    id: target
+    attributes:
+      label: File or section
+      description: Path and heading, for example playbook/04-hooks-and-guardrails.md, "Exit codes".
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is wrong or missing
+      description: Say what a reader would get wrong or fail to do today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: The new text, command or config if you have it.
+    validations:
+      required: true
+  - type: dropdown
+    id: type
+    attributes:
+      label: Kind of change
+      options:
+        - Correction (something is wrong)
+        - Clarification (something is unclear)
+        - New guidance
+        - Hook or settings template
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Link to the Claude Code docs page, or say that this is a recommendation you have not verified.

@@ -1,0 +1,45 @@
+name: Scenario proposal
+description: Propose a new production-style use case for the scenarios folder.
+title: "[scenario] "
+labels: ["scenario"]
+body:
+  - type: markdown
+    attributes:
+      value: Scenarios are close-to-real-world walkthroughs. Do not include real customer, ticket or credential data.
+  - type: input
+    id: name
+    attributes:
+      label: Scenario name
+      description: For example "Database migration review".
+    validations:
+      required: true
+  - type: textarea
+    id: situation
+    attributes:
+      label: Situation
+      description: Who is the user, what repo and tools are involved, and what triggers the work.
+    validations:
+      required: true
+  - type: textarea
+    id: guardrails
+    attributes:
+      label: Guardrails that apply
+      description: Which permissions, hooks and review gates matter here, and why.
+    validations:
+      required: true
+  - type: textarea
+    id: failure
+    attributes:
+      label: What can go wrong
+      description: The risky steps and what stops them.
+    validations:
+      required: true
+  - type: checkboxes
+    id: acks
+    attributes:
+      label: Checks
+      options:
+        - label: The scenario can be described without secrets or private data.
+          required: true
+        - label: I searched existing scenarios and this is not a duplicate.
+          required: true
