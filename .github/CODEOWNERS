@@ -1,0 +1,6 @@
+# Every change needs the owner. Guardrail and CI paths are listed explicitly
+# so they stay owned if the default rule is ever changed.
+*                  @kaushik-sai
+/templates/claude/ @kaushik-sai
+/.github/          @kaushik-sai
+/tests/            @kaushik-sai

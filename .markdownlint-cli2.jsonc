@@ -1,0 +1,18 @@
+{
+  // Markdown rules for the playbook. Defaults stay on except where noted.
+  "config": {
+    "default": true,
+    // Tables, code samples and links are long. Prose is kept short by the style guide, not by this rule.
+    "MD013": false,
+    // Playbook chapters repeat headings such as "Checklist"; siblings only must be unique.
+    "MD024": { "siblings_only": true },
+    // Templates use <placeholder> text that looks like HTML tags.
+    "MD033": false,
+    // Table pipe spacing: the compact separator row (|---|) is used across the repo.
+    "MD060": false,
+    // Templates start with an instruction line, not an H1 in the first line of some files.
+    "MD041": false
+  },
+  "globs": ["**/*.md"],
+  "ignores": ["node_modules/**", ".git/**"]
+}

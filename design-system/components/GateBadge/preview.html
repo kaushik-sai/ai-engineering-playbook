@@ -1,0 +1,16 @@
+<!-- @dsCard group="Status" height=96 subtitle="Review gate state" -->
+<style>
+  .row{display:flex;flex-wrap:wrap;gap:var(--space-3);padding:var(--space-4);font-family:var(--font-sans);background:var(--surface-000);color:var(--ink)}
+  .item{display:flex;align-items:center;gap:var(--space-2);font-size:14px}
+  .gate{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:var(--radius-pill);font:600 12px/16px var(--font-sans);letter-spacing:.06em;text-transform:uppercase}
+  .gate__dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+  .gate--pass{background:var(--allow-tint);color:var(--allow)}
+  .gate--human{background:var(--ask-tint);color:var(--ask)}
+  .gate--blocked{background:var(--deny-tint);color:var(--deny)}
+</style>
+<div class="row">
+  <span class="item"><span class="gate gate--pass"><span class="gate__dot"></span>pass</span> CI: Pester</span>
+  <span class="item"><span class="gate gate--human"><span class="gate__dot"></span>needs-human</span> CODEOWNERS review</span>
+  <span class="item"><span class="gate gate--blocked"><span class="gate__dot"></span>blocked</span> gitleaks</span>
+</div>
+<script></script>

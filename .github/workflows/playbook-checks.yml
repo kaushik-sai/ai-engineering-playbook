@@ -1,0 +1,171 @@
+# playbook-checks: the PR gate for this repo. Run the same checks locally with
+# pwsh ./scripts/Invoke-Checks.ps1 (PowerShell and JSON parts).
+# Third-party actions are pinned by full commit SHA; Dependabot proposes updates.
+
+name: playbook-checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Read-only token. Jobs that need more must ask for it themselves.
+permissions:
+  contents: read
+
+# A new push cancels the run it replaces on the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PESTER_VERSION: '5.7.1'
+  SCRIPT_ANALYZER_VERSION: '1.24.0'
+  ACTIONLINT_VERSION: '1.7.7'
+  # SHA-256 of actionlint_1.7.7_linux_amd64.tar.gz, from the release's checksums file.
+  ACTIONLINT_SHA256: '023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757'
+
+jobs:
+  markdownlint:
+    name: markdownlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          persist-credentials: false
+      - uses: DavidAnson/markdownlint-cli2-action@992badcdf24e3b8eb7e87ff9287fe931bcb00c6e # v20.0.0
+        with:
+          globs: |
+            **/*.md
+            !node_modules/**
+
+  links:
+    name: links (internal)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          persist-credentials: false
+      # Offline: only relative links and fragments inside the repo are checked.
+      # External URLs are not fetched, so the gate does not depend on the network.
+      - uses: lycheeverse/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411 # v2.8.0
+        with:
+          args: --offline --include-fragments --config lychee.toml '**/*.md'
+          fail: true
+
+  secrets:
+    name: secrets
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          # Full history so every commit in the push or PR is scanned.
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  powershell:
+    name: powershell (lint and tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          persist-credentials: false
+
+      - name: 'Tools: pinned Pester and PSScriptAnalyzer'
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name Pester -RequiredVersion $env:PESTER_VERSION -Scope CurrentUser -Force
+          Install-Module -Name PSScriptAnalyzer -RequiredVersion $env:SCRIPT_ANALYZER_VERSION -Scope CurrentUser -Force
+
+      - name: PSScriptAnalyzer (any finding fails)
+        run: |
+          $findings = foreach ($folder in 'templates', 'tests', 'scripts') {
+              Invoke-ScriptAnalyzer -Path $folder -Recurse -Settings ./PSScriptAnalyzerSettings.psd1
+          }
+          if ($findings) {
+              $findings | Format-Table RuleName, Severity, ScriptName, Line, Message -AutoSize | Out-String -Width 200 | Write-Output
+              throw "PSScriptAnalyzer reported $(@($findings).Count) finding(s)."
+          }
+          Write-Output 'PSScriptAnalyzer: 0 findings.'
+
+      - name: Pester
+        run: |
+          $config = New-PesterConfiguration
+          $config.Run.Path = './tests'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          $config.CodeCoverage.Enabled = $false
+          $config.TestResult.Enabled = $true
+          $config.TestResult.OutputFormat = 'NUnitXml'
+          $config.TestResult.OutputPath = './testResults.xml'
+          Invoke-Pester -Configuration $config
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: pester-results
+          path: testResults.xml
+          if-no-files-found: ignore
+
+  json:
+    name: json
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          persist-credentials: false
+      - name: Validate every JSON file
+        run: |
+          set -euo pipefail
+          count=0
+          while IFS= read -r -d '' file; do
+            echo "jq empty $file"
+            jq empty "$file"
+            count=$((count + 1))
+          done < <(find . -name '*.json' -not -path './node_modules/*' -not -path './.git/*' -print0)
+          echo "Validated $count JSON file(s)."
+
+  tokens:
+    name: design tokens
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          persist-credentials: false
+      # Fails when tokens.css or the copy inlined in site/playbook.html is stale.
+      - name: tokens.css is generated from tokens.json
+        run: python3 design-system/build_tokens.py --check
+
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+        with:
+          persist-credentials: false
+      - name: Install pinned actionlint (checksum verified)
+        run: |
+          set -euo pipefail
+          archive="actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          curl -fsSL -o "$RUNNER_TEMP/$archive" "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/${archive}"
+          echo "${ACTIONLINT_SHA256}  $RUNNER_TEMP/$archive" | sha256sum --check -
+          mkdir -p "$RUNNER_TEMP/actionlint"
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP/actionlint" actionlint
+      - name: Run actionlint
+        run: '"$RUNNER_TEMP/actionlint/actionlint" -color'

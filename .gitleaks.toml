@@ -1,0 +1,10 @@
+# Extends the default gitleaks rules. The only allowlist entry is the hook test file:
+# it builds fake secrets (from string parts) to prove the guard hooks block them.
+title = "ai-engineering-playbook gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Fake secret fixtures used to test the guard hooks"
+paths = ['''tests/hooks\.Tests\.ps1''']
